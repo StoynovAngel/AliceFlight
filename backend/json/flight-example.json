@@ -1,0 +1,9 @@
+{
+  "flights": [
+    { "from": "SOF", "to": "IST", "price": 10 },
+    { "from": "IST", "to": "CMB", "price": 20 },
+    { "from": "CMB", "to": "MLE", "price": 40 }
+  ],
+  "origin": "SOF",
+  "destination": "MLE"
+}

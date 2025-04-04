@@ -331,6 +331,6 @@ Find a direct flight from two points. Example null to null.
 ### Then: The response is:
 
 <li>Error: response status is 400</li>
-<li>Origin or destination cannot be empty.</li>
+<li>Origin or destination cannot be null.</li>
 
 ### And: Receives no routes

@@ -1,10 +1,14 @@
 package com.pros.angel.flight.service;
 
 import com.pros.angel.flight.dto.FlightDTO;
-import com.pros.angel.flight.dto.FlightRequestDTO;
-import com.pros.angel.flight.dto.OutputDTO;
-import com.pros.angel.flight.interfaces.OutputInterface;
+import com.pros.angel.flight.model.AvailableFlights;
+import com.pros.angel.flight.dto.RouteResponseDTO;
+import com.pros.angel.flight.exception.BadRequestException;
+import com.pros.angel.flight.exception.NotFoundException;
+import com.pros.angel.flight.exception.RouteNotFoundException;
+import com.pros.angel.flight.interfaces.RouteInterface;
 import com.pros.angel.flight.mapper.FlightRequestMapper;
+import com.pros.angel.flight.model.RouteSearchInput;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,60 +16,81 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-public class FlightRequestService implements OutputInterface {
+public class FlightRequestService implements RouteInterface {
+
+    private static final int MINIMUM_VALUE_FLIGHT = 1;
 
     @Override
-    public List<OutputDTO> getAllFlightsSortedByPrice() {
-        FlightRequestDTO flightRequestDTO = getFlightRequestDTO();
-        List<OutputDTO> outputDTOS = travelLogic(flightRequestDTO);
-        if (outputDTOS.isEmpty()) {
-            System.out.println("No routes.");
+    public List<RouteResponseDTO> getAllRoutesByCoordinates(String origin, String destination, Integer maxFlights) throws NotFoundException, BadRequestException {
+
+        if (maxFlights != null && maxFlights < MINIMUM_VALUE_FLIGHT) {
+            throw new BadRequestException("Max flight should be at least 1");
         }
-        outputDTOS.sort(Comparator.comparingInt(OutputDTO::price));
-        return outputDTOS;
-    }
 
-    public void calculateValidFlight() {
-        FlightRequestDTO flightRequestDTO = getFlightRequestDTO();
-        List<OutputDTO> outputDTOS = travelLogic(flightRequestDTO);
-        if (outputDTOS.isEmpty()) {
-            System.out.println("No routes.");
+        List<RouteResponseDTO> cityRoutes = travelLogic(origin, destination, maxFlights);
+        if (cityRoutes.isEmpty()) {
+            throw new RouteNotFoundException("No routes");
         }
-        outputDTOS.sort(Comparator.comparingInt(OutputDTO::price));
+        cityRoutes.sort(Comparator.comparingInt(RouteResponseDTO::price));
+        return cityRoutes;
     }
 
-    private FlightRequestDTO getFlightRequestDTO() {
-        return FlightRequestMapper.readFlightRequestJSON();
-    }
+    private List<RouteResponseDTO> travelLogic(String origin, String destination, Integer maxFlights) {
+        List<FlightDTO> flights = getAllFlights();
+        List<RouteResponseDTO> cityRoutes = new ArrayList<>();
 
-    private List<OutputDTO> travelLogic(FlightRequestDTO flightRequestDTO) {
-        List<OutputDTO> outputDTOs = new ArrayList<>();
-        List<FlightDTO> flights = flightRequestDTO.flights();
-
-        for (FlightDTO flight: flights) {
-            if (checkForOneFlightTravel(flight, flightRequestDTO)) {
-                outputDTOs.add(singleFlight(flight, flightRequestDTO));
+        for (FlightDTO flight : flights) {
+            if (checkForOneFlightTravel(flight, origin, destination)) {
+                cityRoutes.add(singleFlight(flight, origin, destination));
                 continue;
             }
 
-            if (flight.from().equals(flightRequestDTO.origin())) {
+            if (checkForInitialCity(flight, origin)) {
                 List<String> visited = new ArrayList<>();
+                RouteSearchInput routeSearchInput = new RouteSearchInput(flights, flight, destination, cityRoutes);
                 visited.add(flight.from());
-                findRoutes(flights, flight, flightRequestDTO.destination(), outputDTOs, visited, 0);
+                findRoutes(routeSearchInput, visited, 0, maxFlights);
             }
         }
-        return outputDTOs;
+        return cityRoutes;
     }
 
-    private void findRoutes(List<FlightDTO> originalList, FlightDTO flightDTO, String destination, List<OutputDTO> results, List<String> citiesAlreadyVisited, int totalPrice) {
-        List<String> path = new ArrayList<>(citiesAlreadyVisited);
-        String to = flightDTO.to();
+    private List<FlightDTO> getAllFlights() {
+        AvailableFlights availableFlights = getAvailableFlightsFromFile();
+        return availableFlights.flights();
+    }
 
-        totalPrice += flightDTO.price();
+    private AvailableFlights getAvailableFlightsFromFile() {
+        return FlightRequestMapper.readFlightRequestJSON();
+    }
+
+    private boolean checkForOneFlightTravel(FlightDTO flight, String origin, String destination) {
+        return flight.from().equals(origin) && flight.to().equals(destination);
+    }
+
+    private RouteResponseDTO singleFlight(FlightDTO flight, String origin, String destination) {
+        if (checkForOneFlightTravel(flight, origin, destination)) {
+            List<String> cities = new ArrayList<>();
+            cities.add(flight.from());
+            cities.add(flight.to());
+            return new RouteResponseDTO(cities, flight.price());
+        }
+        return null;
+    }
+
+    private boolean checkForInitialCity(FlightDTO flight, String origin) {
+        return flight.from().equals(origin);
+    }
+
+    private void findRoutes(RouteSearchInput routeSearchInput, List<String> citiesAlreadyVisited, int totalPrice, Integer maxFlights) {
+        List<String> path = new ArrayList<>(citiesAlreadyVisited);
+        String to = routeSearchInput.getStartFlight().to();
+
+        totalPrice += routeSearchInput.getStartFlight().price();
         path.add(to);
 
-        if (to.equals(destination)) {
-            results.add(new OutputDTO(path, totalPrice));
+        if (to.equals(routeSearchInput.getDestination())) {
+            routeSearchInput.getRoutes().add(new RouteResponseDTO(path, totalPrice));
             return;
         }
 
@@ -73,29 +98,28 @@ public class FlightRequestService implements OutputInterface {
             return;
         }
 
-        List <FlightDTO> nextFlights = filteredList(originalList, to);
-        for (FlightDTO nextFlight: nextFlights) {
+        // Original starting point: a.
+        // Destination point: d.
+        // Route: a->b->c->d
+        if (maxFlights != null && path.size() - 1 == maxFlights) {
+            return;
+        }
+
+        List<FlightDTO> nextFlights = filteredList(routeSearchInput.getAllFlights(), to);
+        for (FlightDTO nextFlight : nextFlights) {
+            RouteSearchInput newInput = new RouteSearchInput(
+                    routeSearchInput.getAllFlights(),
+                    nextFlight,
+                    routeSearchInput.getDestination(),
+                    routeSearchInput.getRoutes()
+            );
             if (!path.contains(nextFlight.to())) {
-                findRoutes(originalList, nextFlight, destination, results, path, totalPrice);
+                findRoutes(newInput, path, totalPrice, maxFlights);
             }
         }
     }
 
-    private OutputDTO singleFlight(FlightDTO flight, FlightRequestDTO flightRequestDTO) {
-        if (checkForOneFlightTravel(flight, flightRequestDTO)) {
-            List<String> cities = new ArrayList<>();
-            cities.add(flight.from());
-            cities.add(flight.to());
-            return new OutputDTO(cities, flight.price());
-        }
-        return null;
-    }
-
     private List<FlightDTO> filteredList(List<FlightDTO> original, String fromCity) {
         return original.stream().filter(flightDTO -> flightDTO.from().equals(fromCity)).toList();
-    }
-
-    private boolean checkForOneFlightTravel(FlightDTO flight, FlightRequestDTO flightRequestDTO) {
-        return flight.from().equals(flightRequestDTO.origin()) && flight.to().equals(flightRequestDTO.destination());
     }
 }

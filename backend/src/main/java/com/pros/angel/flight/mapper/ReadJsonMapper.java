@@ -1,6 +1,7 @@
 package com.pros.angel.flight.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pros.angel.flight.exception.JsonMappingException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,8 +19,9 @@ public class ReadJsonMapper {
             }
             return objectMapper.readValue(file, jsonClass);
         } catch (IOException e) {
-            System.out.println("Cannot read json file. Message" + e.getMessage());
-            return null;
+            String errorMessage = "Cannot read json file. Message: " + e.getMessage();
+            System.out.println(errorMessage);
+            throw new JsonMappingException(errorMessage);
         }
     }
 }

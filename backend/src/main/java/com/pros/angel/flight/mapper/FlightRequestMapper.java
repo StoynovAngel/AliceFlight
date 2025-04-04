@@ -5,7 +5,6 @@ import com.pros.angel.flight.model.AvailableFlights;
 public class FlightRequestMapper {
 
     // You can assume that the available flights and their prices are static and can be read from a file
-    // Could be made into a separate entity tho.
     private static final String filename = "json/flight-example-2.json";
 
     public static AvailableFlights readFlightRequestJSON() {

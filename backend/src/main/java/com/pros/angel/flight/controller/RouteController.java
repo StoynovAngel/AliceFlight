@@ -4,7 +4,7 @@ import com.pros.angel.flight.dto.RouteRequestDTO;
 import com.pros.angel.flight.dto.RouteResponseDTO;
 import com.pros.angel.flight.exception.BadRequestException;
 import com.pros.angel.flight.exception.NotFoundException;
-import com.pros.angel.flight.service.FlightRequestService;
+import com.pros.angel.flight.service.RouteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ import java.util.List;
 public class RouteController {
 
     @Autowired
-    private FlightRequestService flightRequestService;
+    private RouteService routeService;
 
     @GetMapping("/limit")
     @ResponseStatus(value = HttpStatus.OK)
@@ -25,12 +25,12 @@ public class RouteController {
             @RequestParam(name = "destination") String destination,
             @RequestParam(name = "maxFlights", required = false) Integer maxFlights
     ) throws NotFoundException, BadRequestException {
-        return flightRequestService.getAllRoutesByCoordinates(origin, destination, maxFlights);
+        return routeService.getAllRoutesByCoordinates(origin, destination, maxFlights);
     }
 
     @PostMapping("/limit")
     @ResponseStatus(value = HttpStatus.OK)
     List<RouteResponseDTO> getALLRoutesByCoordinates(@RequestBody RouteRequestDTO requestDTO) throws NotFoundException, BadRequestException {
-        return flightRequestService.getAllRoutesByCoordinates(requestDTO.origin(), requestDTO.destination(), requestDTO.maxFlights());
+        return routeService.getAllRoutesByCoordinates(requestDTO.origin(), requestDTO.destination(), requestDTO.maxFlights());
     }
 }

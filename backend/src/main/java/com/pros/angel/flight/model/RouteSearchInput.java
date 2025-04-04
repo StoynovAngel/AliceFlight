@@ -6,10 +6,10 @@ import com.pros.angel.flight.dto.RouteResponseDTO;
 import java.util.List;
 
 public class RouteSearchInput {
-    private List<FlightDTO> allFlights;
-    private FlightDTO startFlight;
-    private String destination;
-    private List<RouteResponseDTO> routes;
+    private final List<FlightDTO> allFlights;
+    private final FlightDTO startFlight;
+    private final String destination;
+    private final List<RouteResponseDTO> routes;
 
     public RouteSearchInput(List<FlightDTO> allFlights, FlightDTO startFlight, String destination, List<RouteResponseDTO> routes) {
         this.allFlights = allFlights;

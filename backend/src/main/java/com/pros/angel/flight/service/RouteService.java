@@ -9,6 +9,8 @@ import com.pros.angel.flight.exception.RouteNotFoundException;
 import com.pros.angel.flight.interfaces.RouteInterface;
 import com.pros.angel.flight.mapper.FlightRequestMapper;
 import com.pros.angel.flight.model.RouteSearchInput;
+import com.pros.angel.flight.validation.CityValidation;
+import com.pros.angel.flight.validation.FlightValidation;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,16 +18,15 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-public class FlightRequestService implements RouteInterface {
+public class RouteService implements RouteInterface {
 
-    private static final int MINIMUM_VALUE_FLIGHT = 1;
+    private final CityValidation cityInstance = CityValidation.getInstance();
+    private final FlightValidation flightInstance = FlightValidation.getInstance();
 
     @Override
     public List<RouteResponseDTO> getAllRoutesByCoordinates(String origin, String destination, Integer maxFlights) throws NotFoundException, BadRequestException {
-
-        if (maxFlights != null && maxFlights < MINIMUM_VALUE_FLIGHT) {
-            throw new BadRequestException("Max flight should be at least 1");
-        }
+        flightInstance.maxFlightsValidation(maxFlights);
+        cityInstance.citiesValidation(origin, destination);
 
         List<RouteResponseDTO> cityRoutes = travelLogic(origin, destination, maxFlights);
         if (cityRoutes.isEmpty()) {
@@ -98,9 +99,10 @@ public class FlightRequestService implements RouteInterface {
             return;
         }
 
-        // Original starting point: a.
-        // Destination point: d.
-        // Route: a->b->c->d
+        /* Original starting point: a.
+        Destination point: d
+        Route: a->b->c->d
+        If maxFlights = 2, layovers = 1 */
         if (maxFlights != null && path.size() - 1 == maxFlights) {
             return;
         }

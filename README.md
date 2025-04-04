@@ -8,6 +8,10 @@
 # Installation:
 No steps are required.
 
+# Swagger:
+## You can access the API here on:
+Start the server and go to this url: http://localhost:8080/swagger-ui/index.html#
+
 # Feature: 
 <p>
     Alice want to book a flight. She does it by specifying origin and destination. It allows Alice to find all flights that she can get on. 

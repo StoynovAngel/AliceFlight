@@ -18,16 +18,6 @@ public class RouteController {
     @Autowired
     private RouteService routeService;
 
-    @GetMapping()
-    @ResponseStatus(value = HttpStatus.OK)
-    List<RouteResponseDTO> getALLRoutesByCoordinates(
-            @RequestParam(name = "origin") String origin,
-            @RequestParam(name = "destination") String destination,
-            @RequestParam(name = "maxFlights", required = false) Integer maxFlights
-    ) throws NotFoundException, BadRequestException {
-        return routeService.getAllRoutesByCoordinates(origin, destination, maxFlights);
-    }
-
     @PostMapping()
     @ResponseStatus(value = HttpStatus.OK)
     List<RouteResponseDTO> getALLRoutesByCoordinates(@RequestBody RouteRequestDTO requestDTO) throws NotFoundException, BadRequestException {

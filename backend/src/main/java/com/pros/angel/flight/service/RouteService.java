@@ -47,10 +47,7 @@ public class RouteService implements RouteInterface {
             }
 
             if (checkForInitialCity(flight, origin)) {
-                List<String> visited = new ArrayList<>();
-                RouteSearchInput routeSearchInput = new RouteSearchInput(flights, flight, destination, cityRoutes);
-                visited.add(flight.from());
-                findRoutes(routeSearchInput, visited, 0, maxFlights);
+                exploreRoutesFromOrigin(flight, destination, maxFlights, flights, cityRoutes);
             }
         }
         return cityRoutes;
@@ -81,6 +78,14 @@ public class RouteService implements RouteInterface {
 
     private boolean checkForInitialCity(FlightDTO flight, String origin) {
         return flight.from().equals(origin);
+    }
+
+    private void exploreRoutesFromOrigin(FlightDTO flight, String destination, Integer maxFlights, List<FlightDTO> allFlights, List<RouteResponseDTO> routes) {
+        int totalPrice = 0;
+        List<String> visited = new ArrayList<>();
+        RouteSearchInput routeSearchInput = new RouteSearchInput(allFlights, flight, destination, routes);
+        visited.add(flight.from());
+        findRoutes(routeSearchInput, visited, totalPrice, maxFlights);
     }
 
     private void findRoutes(RouteSearchInput routeSearchInput, List<String> citiesAlreadyVisited, int totalPrice, Integer maxFlights) {

@@ -287,7 +287,7 @@ Find a direct flight from two points. Example SOFIA to MIAMI.
 ### Scenario:
 Find a direct flight from two points. Example sof to mle.
 ### Given: The available flights (above):
-### When: Alice sends a INCORRECT POST request containing origin or destination longer than 3 characters:
+### When: Alice sends a INCORRECT POST request containing lowercase letters:
 ```json
 {
 "origin": "sof",

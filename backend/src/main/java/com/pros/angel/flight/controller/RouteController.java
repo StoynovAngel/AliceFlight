@@ -20,7 +20,7 @@ public class RouteController {
 
     @PostMapping()
     @ResponseStatus(value = HttpStatus.OK)
-    List<RouteResponseDTO> getALLRoutesByCoordinates(@RequestBody RouteRequestDTO requestDTO) throws NotFoundException, BadRequestException {
+    List<RouteResponseDTO> getAllRoutesByCoordinates(@RequestBody RouteRequestDTO requestDTO) throws NotFoundException, BadRequestException {
         return routeService.getAllRoutesByCoordinates(requestDTO.origin(), requestDTO.destination(), requestDTO.maxFlights());
     }
 }

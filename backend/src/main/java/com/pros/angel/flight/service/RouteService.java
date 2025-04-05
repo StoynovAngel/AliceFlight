@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RouteService implements RouteInterface {
@@ -42,7 +43,8 @@ public class RouteService implements RouteInterface {
 
         for (FlightDTO flight : flights) {
             if (checkForOneFlightTravel(flight, origin, destination)) {
-                cityRoutes.add(singleFlight(flight, origin, destination));
+                Optional<RouteResponseDTO> optionalRoute = singleFlight(flight, origin, destination);
+                optionalRoute.ifPresent(cityRoutes::add);
                 continue;
             }
 
@@ -66,14 +68,14 @@ public class RouteService implements RouteInterface {
         return flight.from().equals(origin) && flight.to().equals(destination);
     }
 
-    private RouteResponseDTO singleFlight(FlightDTO flight, String origin, String destination) {
+    private Optional<RouteResponseDTO> singleFlight(FlightDTO flight, String origin, String destination) {
         if (checkForOneFlightTravel(flight, origin, destination)) {
             List<String> cities = new ArrayList<>();
             cities.add(flight.from());
             cities.add(flight.to());
-            return new RouteResponseDTO(cities, flight.price());
+            return Optional.of(new RouteResponseDTO(cities, flight.price()));
         }
-        return null;
+        return Optional.empty();
     }
 
     private boolean checkForInitialCity(FlightDTO flight, String origin) {
